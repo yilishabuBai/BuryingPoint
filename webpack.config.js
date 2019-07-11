@@ -15,7 +15,8 @@ module.exports = {
         new HTMLWebpackPlugin({
             template: path.resolve(__dirname, 'public/index.html'),
             title: 'BuringPoint测试',
-            hash: true
+            hash: true,
+            inject: 'head'
         })
     ],
     devServer: {
