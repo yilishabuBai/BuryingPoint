@@ -4,7 +4,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
     entry: {
-        'index': './src/index.js'
+        '../lib/buring-point': './src/buring-point.js'
     },
     output: {
         path: path.resolve(__dirname, 'dist'),

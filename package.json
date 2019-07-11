@@ -2,7 +2,7 @@
   "name": "burying-point",
   "version": "1.0.0",
   "description": "采用代码埋点的数据埋点工具",
-  "main": "index.js",
+  "main": "buring-point.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "webpack-dev-server",
@@ -44,6 +44,7 @@
     "expose-loader": "^0.7.5",
     "html-webpack-plugin": "^3.2.0",
     "husky": "^3.0.0",
+    "uuid-js": "^0.7.5",
     "webpack": "^4.35.3",
     "webpack-cli": "^3.3.5",
     "webpack-dev-server": "^3.7.2"
