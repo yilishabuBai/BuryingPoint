@@ -2,7 +2,7 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-11 23:43:32
+ * @Last Modified time: 2019-07-12 00:03:22
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
@@ -97,6 +97,20 @@
             var pe = str.indexOf(end);
             pe = pe > 0 ? pe : str.length;
             return str.substring(ps, pe);
+        },
+        checkWhiteList: function () {
+            if (whiteList.length === 0) {
+                return true;
+            }
+            var href = win.location.href;
+            var flag = false;
+            for (var i = 0; i < whiteList.length; i++) {
+                if (href.indexOf(whiteList[i]) > -1) {
+                    flag = true;
+                    break;
+                }
+            }
+            return flag;
         },
         /**
          * 发送请求，使用image标签跨域
@@ -213,7 +227,7 @@
                 var time = new Date().getTime();
                 if(ticker.lastTime > 0) {
                     var delay = time - ticker.lastTime;
-                    for (var i = 0; i < ticker.funcs.length; i ++) {
+                    for (var i = 0; i < ticker.funcs.length; i++) {
                         ticker.funcs[i].func(delay);
                     }
                 }
@@ -239,7 +253,7 @@
          * @param func 方法
          */
         unregister: function (func) {
-            for (var i = 0; i < ticker.funcs.length; i ++) {
+            for (var i = 0; i < ticker.funcs.length; i++) {
                 if(func === ticker.funcs[i].func) {
                     ticker.funcs.splice(i, 1);
                 }
@@ -301,6 +315,12 @@
         },
         get page () {
             return page;
+        },
+        set whiteList (value) {
+            whiteList = value;
+        },
+        get whiteList () {
+            return whiteList;
         }
     };
 
@@ -367,6 +387,11 @@
 
     // 侦听load事件，准备启动数据上报
     utils.addEvent(win, 'load', function () {
+        if (!utils.checkWhiteList()) {
+            console.error('域名不在白名单内', '@burying-point');
+            return;
+        }
+        
         console.log('即将开始上报数据');
         start();
     });
