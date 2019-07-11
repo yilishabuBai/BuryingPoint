@@ -2,7 +2,7 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-12 00:03:22
+ * @Last Modified time: 2019-07-12 00:08:26
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
@@ -117,6 +117,10 @@
          * @param url 接口地址
          */
         sendRequest: function (url) {
+            if (!utils.checkWhiteList()) {
+                console.error('域名不在白名单内', '@burying-point');
+                return;
+            }
             if (page.length === 0) {
                 console.error('请配置有效的page参数', '@burying-point');
                 return;
@@ -391,7 +395,7 @@
             console.error('域名不在白名单内', '@burying-point');
             return;
         }
-        
+
         console.log('即将开始上报数据');
         start();
     });
