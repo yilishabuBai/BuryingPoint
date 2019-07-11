@@ -2,22 +2,23 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-11 16:38:48
+ * @Last Modified time: 2019-07-11 22:48:05
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
     // 使用ua-device库，build后体积增加近150KB
     var UA = require('ua-device');
 
+    var DAY = 86400000;
     var scr = win.screen,
         nav = navigator,
         ua = nav.userAgent,
-        uuid = '',
         protocol = 'https:' === win.location.protocol ? 'https://' : 'http://',
         host = '127.0.0.1',
         page = '',
         baseUrl = protocol + host,
-        cookieName = '',
+        // cookie名称，前后端需要协商定义
+        cookieName = 'bp_did',
         whiteList = [];
     
     var uaOutput = new UA(ua);
@@ -56,11 +57,17 @@
     };
 
     var utils = {
-        // 获取该页面对应上报数据接口的路径
+        /**
+         * 获取该页面对应上报数据接口的路径
+         */
         getPath: function () {
             return '/' + page + '/bp';
         },
-        // 将json结构转为字符串
+        // 
+        /**
+         * 将json结构转为字符串
+         * @param json 数据对象
+         */
         json2Query: function (json) {
             var query = '';
             for (var i in json) {
@@ -70,7 +77,27 @@
             }
             return query.substr(0, query.length - 1);
         },
-        // 发送请求，使用image标签跨域
+        /**
+         * 截取字符串
+         * @param str 目标字符串
+         * @param start 起始字符串
+         * @param end 截取到的字符
+         */
+        stringSplice: function (str, start, end, pass) {
+            if (str === '') {
+                return '';
+            }
+            pass = pass === '' ? '=' : pass;
+            var ps = str.indexOf(start + pass);
+            ps = ps > 0 ? ps : 0;
+            var pe = str.indexOf(end);
+            pe = pe > 0 ? pe : str.length;
+            return str.substring(ps, pe);
+        },
+        /**
+         * 发送请求，使用image标签跨域
+         * @param url 接口地址
+         */
         sendRequest: function (url) {
             if (page.length === 0) {
                 console.error('请配置有效的page参数', '@burying-point');
@@ -79,18 +106,47 @@
             var img = new Image();
             img.src = url;
         },
-        // 跨浏览器事件侦听
-        addEvent: function () {
-            if (doc.attachEvent) {
-                return function (ele, type, func) {
-                    ele.attachEvent('on' + type, func);
-                };
-            } else if (doc.addEventListener) {
-                return function (ele, type, func) {
-                    ele.addEventListener(type, func, false);
-                };
+        /**
+         * 设置cookie
+         * @param name 名称
+         * @param value 值
+         * @param days 保存时间
+         * @param domain 域
+         */
+        setCookie: function (name, value, days, domain) {
+            if (value === null) {
+                return;
             }
-        }(),
+            if (domain === undefined || domain === null) {
+                // 去除host中的端口部分
+                domain = utils.stringSplice(win.location.host, '', ':', '');
+            }
+            if (days === undefined || days === null || days === '') {
+                doc.cookie = name + '=' + value + ';domain=' + domain + ';path=/';
+            } else {
+                var now = new Date();
+                var time = now.getTime() + DAY * days;
+                now.setTime(time);
+                doc.cookie = name + '=' + value + ';domain=' + domain + ';expires=' + now.toUTCString() + ';path/';
+            }
+        },
+        /**
+         * 读取cookie
+         * @param name 名称
+         */
+        getCookie: function (name) {
+            if (name === undefined || name === null) {
+                return;
+            }
+            var reg = RegExp(name);
+            if (reg.test(doc.cookie)) {
+                return utils.stringSplice(doc.cookie, name, ';');
+            }
+        },
+        /**
+         * 解析bp-data中的数据
+         * @param datastr 
+         */
         parse: function (datastr) {
             var data = {};
             // 消除空格
@@ -102,16 +158,54 @@
                 data[arr[0]] = arr[1];
             }
             return data;
+        },
+        /**
+         * 跨浏览器事件侦听
+         */
+        addEvent: function () {
+            if (doc.attachEvent) {
+                return function (ele, type, func) {
+                    ele.attachEvent('on' + type, func);
+                };
+            } else if (doc.addEventListener) {
+                return function (ele, type, func) {
+                    ele.addEventListener(type, func, false);
+                };
+            }
+        }(),
+        /**
+         * 会话id，刷新页面会更新
+         */
+        sessionId: function () {
+            return UUID.create();
+        }(),
+        /**
+         * 设备id，读取cookie，不存在则种入cookie
+         */
+        deviceId: function () {
+            var did = utils.getCookie(cookieName);
+            if (!did) {
+                did = UUID.create();
+                utils.setCookie(cookieName, did, 365);
+            }
+            return did;
         }
     };
 
     var BP = {
         /**
-         * 获取基础数据
+         * 获取基础数据，包括浏览器数据，时间戳
          */
         getData () {
             var ci = utils.json2Query(CI);
-            return ci;
+            var t = 't=' + new Date().getTime();
+            var arr = win.location.href.split('//');
+            var source = arr.length > 1 ? arr[1] : arr[0];
+            var href = 'href=' + encodeURIComponent(utils.stringSplice(source, '', '?', ''));
+            var ref = 'ref=' + encodeURIComponent(utils.stringSplice(doc.referrer, '', '?', ''));
+            var sid = 'sessionId=' + utils.sessionId;
+            var did = 'deviceId=' + utils.deviceId();
+            return ci + '&' + t + '&' + href + '&' + ref + '&' + sid + '&' + did;
         },
         /**
          * 上报pv
@@ -190,7 +284,7 @@
         BP.sendPV();
     };
 
-    console.log(CI, 'href: ' + win.location.href, 'referrer: ' + doc.referrer);
+    console.log(CI, 'href: ' + win.location.href, 'host: ' + win.location.host, 'referrer: ' + doc.referrer);
 
     // 侦听load事件，准备启动数据上报
     utils.addEvent(win, 'load', function () {
