@@ -2,10 +2,11 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-11 14:57:24
+ * @Last Modified time: 2019-07-11 16:08:44
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
+    // 使用ua-device库，build后体积增加近150KB
     var UA = require('ua-device');
 
     var scr = win.screen,
@@ -99,7 +100,31 @@
         },
         // 上报pv
         sendPV () {
-            var url = baseUrl + utils.getPath() + '?evt=visit&' + BP.getData();
+            // var url = baseUrl + utils.getPath() + '?evt=visit&' + BP.getData();
+            // utils.sendRequest(url);
+            BP.send('visit');
+        },
+        send (evt, ext) {
+            if (evt === '') {
+                return;
+            }
+            var extstr = '';
+            if (ext) {
+                // delete ext.evt;
+                for (var i in ext) {
+                    if (ext.hasOwnProperty(i)) {
+                        extstr += '"' + i + '":"' + ext[i] + '",';
+                    }
+                }
+                if (extstr.length > 0) {
+                    extstr += 'ext={' + extstr.substr(0, extstr.length - 1) + '}';
+                }
+            }
+            var url = baseUrl +
+                utils.getPath() +
+                '?evt=' + evt +
+                '&' + BP.getData() +
+                (extstr.length > 0 ? '&' + extstr : '');
             utils.sendRequest(url);
         },
         set page (value) {
@@ -110,8 +135,37 @@
         }
     };
 
-    // 启动埋点
+    /**
+     * 埋点，捕获带有bp-data属性的节点点击事件
+     */
+    var buryingPoint = function () {
+        var attr = 'bp-data';
+        var evtType = utils.mobile ? 'touchstart' : 'mousedown';
+        utils.addEvent(doc, evtType, function (evt) {
+            var target = evt.srcElement || evt.target;
+            while (target && target.parentNode) {
+                if (target.hasAttribute(attr)) {
+                    var metadata = target.getAttribute(attr);
+                    var data = utils.parse(metadata);
+                    if (target.nodeName.toLowerCase() === 'a') {
+                        data.href = encodeURIComponent(target.href);
+                    }
+                    if (data.evt) {
+                        BP.send(data);
+                    }
+                    break;
+                }
+                target = target.parentNode;
+            }
+        });
+    };
+
+    /**
+     * 启动埋点
+     */
     var start = function () {
+        buryingPoint();
+        
         BP.sendPV();
     };
 
