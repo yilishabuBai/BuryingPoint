@@ -2,7 +2,7 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-11 16:08:44
+ * @Last Modified time: 2019-07-11 16:38:48
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
@@ -90,27 +90,46 @@
                     ele.addEventListener(type, func, false);
                 };
             }
-        }()
+        }(),
+        parse: function (datastr) {
+            var data = {};
+            // 消除空格
+            datastr = datastr.replace(/\s/g, '');
+            datastr = datastr.substr(1, datastr.length - 2);
+            var objarr = datastr.split(',');
+            for (var i = 0; i < objarr.length; i++) {
+                var arr = objarr[i].split(':');
+                data[arr[0]] = arr[1];
+            }
+            return data;
+        }
     };
 
     var BP = {
+        /**
+         * 获取基础数据
+         */
         getData () {
             var ci = utils.json2Query(CI);
             return ci;
         },
-        // 上报pv
+        /**
+         * 上报pv
+         */
         sendPV () {
-            // var url = baseUrl + utils.getPath() + '?evt=visit&' + BP.getData();
-            // utils.sendRequest(url);
             BP.send('visit');
         },
+        /**
+         * 上报数据
+         * @param evt 事件
+         * @param ext 扩展数据
+         */
         send (evt, ext) {
             if (evt === '') {
                 return;
             }
             var extstr = '';
             if (ext) {
-                // delete ext.evt;
                 for (var i in ext) {
                     if (ext.hasOwnProperty(i)) {
                         extstr += '"' + i + '":"' + ext[i] + '",';
@@ -151,7 +170,9 @@
                         data.href = encodeURIComponent(target.href);
                     }
                     if (data.evt) {
-                        BP.send(data);
+                        var event = data.evt;
+                        delete data.evt;
+                        BP.send(event, data);
                     }
                     break;
                 }
