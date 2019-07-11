@@ -1,0 +1,51 @@
+{
+  "name": "burying-point",
+  "version": "1.0.0",
+  "description": "采用代码埋点的数据埋点工具",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "webpack-dev-server",
+    "dev": "webpack --mode development",
+    "build": "webpack --mode production",
+    "eslint": "eslint --fix --ext .js src/",
+    "commit": "git-cz"
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run eslint",
+      "commit-msg": "commitlint -e $GIT_PARAMS"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yilishabuBai/BuryingPoint.git"
+  },
+  "keywords": [],
+  "author": "伊丽莎不白",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yilishabuBai/BuryingPoint/issues"
+  },
+  "homepage": "https://github.com/yilishabuBai/BuryingPoint#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^8.0.0",
+    "@commitlint/config-conventional": "^8.0.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "commitizen": "^3.1.1",
+    "cz-conventional-changelog": "^2.1.0",
+    "eslint": "^6.0.1",
+    "eslint-loader": "^2.2.1",
+    "expose-loader": "^0.7.5",
+    "html-webpack-plugin": "^3.2.0",
+    "husky": "^3.0.0",
+    "webpack": "^4.35.3",
+    "webpack-cli": "^3.3.5",
+    "webpack-dev-server": "^3.7.2"
+  }
+}
