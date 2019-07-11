@@ -2,7 +2,7 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-11 22:48:05
+ * @Last Modified time: 2019-07-11 23:43:32
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
@@ -10,10 +10,12 @@
     var UA = require('ua-device');
 
     var DAY = 86400000;
+
     var scr = win.screen,
         nav = navigator,
         ua = nav.userAgent,
         protocol = 'https:' === win.location.protocol ? 'https://' : 'http://',
+        // 上报地址
         host = '127.0.0.1',
         page = '',
         baseUrl = protocol + host,
@@ -21,7 +23,9 @@
         cookieName = 'bp_did',
         whiteList = [];
     
-    var uaOutput = new UA(ua);
+    var uaOutput = new UA(ua),
+        totalTime = 0,
+        stayTime = 10000;   // 触发间隔30秒
     
     // 浏览器信息
     var CI = {
@@ -192,6 +196,57 @@
         }
     };
 
+    // 简易版Ticker
+    var ticker = {
+        tid: 0,
+        lastTime: 0,
+        funcs: [],
+        /**
+         * 启动
+         */
+        start: function () {
+            if(ticker.tid > 0) {
+                return;
+            }
+            ticker.lastTime = 0;
+            ticker.tid = setInterval(function () {
+                var time = new Date().getTime();
+                if(ticker.lastTime > 0) {
+                    var delay = time - ticker.lastTime;
+                    for (var i = 0; i < ticker.funcs.length; i ++) {
+                        ticker.funcs[i].func(delay);
+                    }
+                }
+                ticker.lastTime = time;
+            }, 33);
+        },
+        /**
+         * 停止
+         */
+        stop: function () {
+            clearInterval(ticker.tid);
+            ticker.tid = 0;
+        },
+        /**
+         * 注册钩子函数
+         * @param func 方法
+         */
+        register: function (func) {
+            ticker.funcs.push({ 'func': func });
+        },
+        /**
+         * 删除钩子函数
+         * @param func 方法
+         */
+        unregister: function (func) {
+            for (var i = 0; i < ticker.funcs.length; i ++) {
+                if(func === ticker.funcs[i].func) {
+                    ticker.funcs.splice(i, 1);
+                }
+            }
+        }
+    };
+
     var BP = {
         /**
          * 获取基础数据，包括浏览器数据，时间戳
@@ -201,6 +256,7 @@
             var t = 't=' + new Date().getTime();
             var arr = win.location.href.split('//');
             var source = arr.length > 1 ? arr[1] : arr[0];
+            // 去除参数
             var href = 'href=' + encodeURIComponent(utils.stringSplice(source, '', '?', ''));
             var ref = 'ref=' + encodeURIComponent(utils.stringSplice(doc.referrer, '', '?', ''));
             var sid = 'sessionId=' + utils.sessionId;
@@ -276,19 +332,42 @@
     };
 
     /**
+     * Ticker钩子函数，用于上报页面停留时长
+     * @param dt 间隔时间
+     */
+    function calStayTime (delay) {
+        totalTime += delay;
+        if(totalTime >= stayTime) {
+            BP.send('stay', { time: stayTime });
+            totalTime -= stayTime;
+        }
+    }
+
+    /**
      * 启动埋点
      */
     var start = function () {
         buryingPoint();
         
         BP.sendPV();
-    };
 
-    console.log(CI, 'href: ' + win.location.href, 'host: ' + win.location.host, 'referrer: ' + doc.referrer);
+        // 启动ticker
+        ticker.start();
+        ticker.register(calStayTime);
+
+        // 页面离开时不再计时
+        utils.addEvent(doc, 'visibilitychange', function () {
+            if (doc.visibilityState === 'hidden') {
+                ticker.stop();
+            } else {
+                ticker.start();
+            }
+        });
+    };
 
     // 侦听load事件，准备启动数据上报
     utils.addEvent(win, 'load', function () {
-        console.log('埋点脚本要开始运行了');
+        console.log('即将开始上报数据');
         start();
     });
 
