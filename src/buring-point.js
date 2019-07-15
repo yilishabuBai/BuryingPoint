@@ -2,7 +2,7 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-12 00:08:26
+ * @Last Modified time: 2019-07-15 16:18:39
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
@@ -21,8 +21,9 @@
         baseUrl = protocol + host,
         // cookie名称，前后端需要协商定义
         cookieName = 'bp_did',
+        year = 365,
         whiteList = [];
-    
+
     var uaOutput = new UA(ua),
         totalTime = 0,
         stayTime = 10000;   // 触发间隔30秒
@@ -92,12 +93,16 @@
                 return '';
             }
             pass = pass === '' ? '=' : pass;
-            var ps = str.indexOf(start + pass);
-            ps = ps > 0 ? ps : 0;
-            var pe = str.indexOf(end);
+            start += pass;
+            var ps = str.indexOf(start);
+            ps = ps > 0 ? ps + start.length : 0;
+            var pe = str.indexOf(end, ps);
             pe = pe > 0 ? pe : str.length;
             return str.substring(ps, pe);
         },
+        /**
+         * 白名单校验
+         */
         checkWhiteList: function () {
             if (whiteList.length === 0) {
                 return true;
@@ -141,7 +146,7 @@
             }
             if (domain === undefined || domain === null) {
                 // 去除host中的端口部分
-                domain = utils.stringSplice(win.location.host, '', ':', '');
+                domain = utils.stringSplice(win.location.host, 'host', ':', '');
             }
             if (days === undefined || days === null || days === '') {
                 doc.cookie = name + '=' + value + ';domain=' + domain + ';path=/';
@@ -162,7 +167,7 @@
             }
             var reg = RegExp(name);
             if (reg.test(doc.cookie)) {
-                return utils.stringSplice(doc.cookie, name, ';');
+                return utils.stringSplice(doc.cookie, name, ';', '');
             }
         },
         /**
@@ -195,23 +200,14 @@
                 };
             }
         }(),
-        /**
-         * 会话id，刷新页面会更新
-         */
-        sessionId: function () {
-            return UUID.create();
-        }(),
-        /**
-         * 设备id，读取cookie，不存在则种入cookie
-         */
-        deviceId: function () {
-            var did = utils.getCookie(cookieName);
-            if (!did) {
-                did = UUID.create();
-                utils.setCookie(cookieName, did, 365);
+        mobile: function () {
+            try {
+                doc.createEvent('TouchEvent');
+                return true;
+            } catch (e) {
+                return false;
             }
-            return did;
-        }
+        }()
     };
 
     // 简易版Ticker
@@ -267,6 +263,23 @@
 
     var BP = {
         /**
+         * 会话id，刷新页面会更新
+         */
+        sessionId: function () {
+            return UUID.create();
+        }(),
+        /**
+         * 设备id，读取cookie，不存在则种入cookie
+         */
+        deviceId: function () {
+            var did = utils.getCookie(cookieName);
+            if (!did) {
+                did = UUID.create();
+                utils.setCookie(cookieName, did, year);
+            }
+            return did;
+        }(),
+        /**
          * 获取基础数据，包括浏览器数据，时间戳
          */
         getData () {
@@ -275,10 +288,10 @@
             var arr = win.location.href.split('//');
             var source = arr.length > 1 ? arr[1] : arr[0];
             // 去除参数
-            var href = 'href=' + encodeURIComponent(utils.stringSplice(source, '', '?', ''));
-            var ref = 'ref=' + encodeURIComponent(utils.stringSplice(doc.referrer, '', '?', ''));
-            var sid = 'sessionId=' + utils.sessionId;
-            var did = 'deviceId=' + utils.deviceId();
+            var href = 'href=' + encodeURIComponent(utils.stringSplice(source, 'href', '?', ''));
+            var ref = 'ref=' + encodeURIComponent(utils.stringSplice(doc.referrer, 'ref', '?', ''));
+            var sid = 'sessionId=' + BP.sessionId;
+            var did = 'deviceId=' + BP.deviceId;
             return ci + '&' + t + '&' + href + '&' + ref + '&' + sid + '&' + did;
         },
         /**
@@ -304,7 +317,7 @@
                     }
                 }
                 if (extstr.length > 0) {
-                    extstr += 'ext={' + extstr.substr(0, extstr.length - 1) + '}';
+                    extstr = 'ext={' + extstr.substr(0, extstr.length - 1) + '}';
                 }
             }
             var url = baseUrl +
@@ -359,13 +372,13 @@
      * Ticker钩子函数，用于上报页面停留时长
      * @param dt 间隔时间
      */
-    function calStayTime (delay) {
-        totalTime += delay;
+    var calStayTime = function (dt) {
+        totalTime += dt;
         if(totalTime >= stayTime) {
             BP.send('stay', { time: stayTime });
             totalTime -= stayTime;
         }
-    }
+    };
 
     /**
      * 启动埋点
