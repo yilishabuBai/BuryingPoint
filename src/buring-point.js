@@ -2,20 +2,20 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-15 16:18:39
+ * @Last Modified time: 2019-07-15 17:02:38
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
     // 使用ua-device库，build后体积增加近150KB
     var UA = require('ua-device');
-
+    // 一天的毫秒数
     var DAY = 86400000;
 
     var scr = win.screen,
         nav = navigator,
         ua = nav.userAgent,
         protocol = 'https:' === win.location.protocol ? 'https://' : 'http://',
-        // 上报地址
+        // 上报地址，根据项目情况配置
         host = '127.0.0.1',
         page = '',
         baseUrl = protocol + host,
