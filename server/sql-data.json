@@ -1,0 +1,11 @@
+{
+    "tables": [
+        "CREATE TABLE buryingPoint ( id INTEGER PRIMARY KEY NOT NULL, page TEXT NOT NULL, evt TEXT NOT NULL, width INT, height INT, network TEXT, language TEXT, timezone INT, ua TEXT, os TEXT, borwser TEXT, engine TEXT, timestamp INT, href TEXT, ref TEXT, sessionId TEXT, deviceId TEXT )"
+    ],
+    "insert": "INSERT INTO buryingPoint ( page, evt, width, height, network, language, timezone, ua, os, borwser, engine, timestamp, href, ref, sessionId, deviceId ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )",
+    "query": {
+        "uv": "SELECT DISTINCT deviceId FROM buryingPoint",
+        "pv": "SELECT DISTINCT sessionId FROM buryingPoint",
+        "stay": "SELECT * FROM buryingPoint WHERE evt = 'stay'"
+    }
+}
