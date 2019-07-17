@@ -41,5 +41,6 @@ module.exports = {
         'no-var': 'off'
     },
     globals: {
+        XDomainRequest: true
     }
 };
