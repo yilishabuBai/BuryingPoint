@@ -8,6 +8,9 @@
 </head>
 <body>
     <div id="root">
+        <div id="query">
+        </div>
+        <p>
         <div bp-data='{evt:click}'>点击我会上报一条数据</div>
     </div>
 
@@ -16,6 +19,17 @@
         // 开启白名单
         // BP.whiteList.push('0.0.0.0');
         // BP.send('script');
+
+        var query = document.getElementById('query');
+
+        Query.get(updateInfo);
+        setInterval(function () {
+            Query.get(updateInfo);
+        }, 300000);
+
+        function updateInfo (info) {
+            query.innerHTML = '当前共有 ' + info.uv + ' 个人浏览了页面，共浏览了 ' + info.pv + ' 次';
+        }
     </script>
 </body>
 </html>

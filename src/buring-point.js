@@ -2,7 +2,7 @@
  * @Author: 伊丽莎不白 
  * @Date: 2019-07-11 13:47:41 
  * @Last Modified by: 伊丽莎不白
- * @Last Modified time: 2019-07-15 17:02:38
+ * @Last Modified time: 2019-07-16 10:09:12
  */
 (function (win, doc) {
     var UUID = require('uuid-js');
@@ -16,7 +16,7 @@
         ua = nav.userAgent,
         protocol = 'https:' === win.location.protocol ? 'https://' : 'http://',
         // 上报地址，根据项目情况配置
-        host = '127.0.0.1',
+        host = 'localhost:6869',
         page = '',
         baseUrl = protocol + host,
         // cookie名称，前后端需要协商定义
